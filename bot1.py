@@ -564,8 +564,11 @@ def broadcast(message):
     if message.from_user.id not in ADMIN_IDS:
         return bot.reply_to(message, "❌ ဒီ Command ကို Bot Owner သာ သုံးနိုင်ပါတယ်။")
     
-    # ၂။ ပို့မယ့် Message ကို ယူမယ် (Reply ထောက်ထားရင် အဲဒီစာကိုယူမယ်၊ မဟုတ်ရင် command နောက်ကစာကိုယူမယ်)
-    target = message.reply_to_message if message.reply_to_message else message
+    # ၂။ ပို့မယ့် Message ကို ယူမယ် (Reply ထောက်ထားတဲ့ message ကို copy ကူးမှာပါ)
+    if not message.reply_to_message:
+        return bot.reply_to(message, "⚠️ Broadcast ပို့ချင်တဲ့ Message (ပုံ/ဗီဒီယို/စာသား) ကို <b>Reply</b> ထောက်ပြီးမှ ဒီ command ကို သုံးပေးပါ။", parse_mode="HTML")
+
+    target_msg = message.reply_to_message
     
     # ၃။ ပို့ရမယ့် Target IDs
     all_targets = list(set(data.get("groups", []) + data.get("users", [])))
@@ -573,78 +576,69 @@ def broadcast(message):
     if not all_targets:
         return bot.reply_to(message, "⚠️ ပို့စရာ Target မရှိသေးပါဘူး။")
 
-    bot.send_message(message.chat.id, f"🚀 စုစုပေါင်း {len(all_targets)} နေရာကို ပို့နေပါပြီ...")
+    status_msg = bot.reply_to(message, f"🚀 စုစုပေါင်း {len(all_targets)} နေရာကို ပို့နေပါပြီ...")
     
     success = 0
     fail = 0
 
     for tid in all_targets:
         try:
-            # ပုံပို့တဲ့အခါ Caption ထဲမှာ Premium Emoji ပါရင် အလုပ်လုပ်အောင် caption_entities ထည့်ထားပါတယ်
-            if target.content_type == 'photo':
-                cap = target.caption.replace("/broadcast", "").strip() if target.caption else ""
-                bot.send_photo(tid, target.photo[-1].file_id, caption=cap, caption_entities=target.caption_entities)
-            
-            # စာသားပို့တဲ့အခါ Premium Emoji ပါအောင် entities ထည့်ထားပါတယ်
-            elif target.content_type == 'text':
-                txt = target.text.replace("/broadcast", "").strip() if target.text else ""
-                if txt:
-                    # parse_mode=None ထားပြီး entities ကိုသုံးတာက Premium Emoji အတွက် အကောင်းဆုံးပါ
-                    bot.send_message(tid, txt, entities=target.entities, parse_mode=None)
-            
-            # စတစ်ကာ ပို့ခြင်း
-            elif target.content_type == 'sticker':
-                bot.send_sticker(tid, target.sticker.file_id)
-            
+            # copy_message သည် Original Message ၏ ပုံစံ၊ Caption နှင့် Premium Emoji အားလုံးကို 
+            # မူရင်းအတိုင်း ကူးယူပေးပို့သည်။ (Photo, Video, Sticker, Text, Audio အကုန်ရသည်)
+            bot.copy_message(
+                chat_id=tid, 
+                from_chat_id=message.chat.id, 
+                message_id=target_msg.message_id
+            )
             success += 1
-            time.sleep(0.3) 
+            time.sleep(0.1) # မြန်နှုန်းမြှင့်ထားသော်လည်း Flood မဖြစ်အောင် အနည်းငယ်ခြားထားသည်
         except Exception as e:
             print(f"Broadcast failed for {tid}: {e}")
             fail += 1
             continue
 
-    bot.send_message(message.chat.id, f"✅ <b>Broadcast ပို့ပြီးပါပြီ!</b>\n\n🟢 အောင်မြင်: {success}\n🔴 ကျရှုံး: {fail}", parse_mode="HTML")
+    bot.edit_message_text(
+        f"✅ <b>Broadcast ပို့ပြီးပါပြီ!</b>\n\n🟢 အောင်မြင်: {success}\n🔴 ကျရှုံး: {fail}",
+        chat_id=message.chat.id,
+        message_id=status_msg.message_id,
+        parse_mode="HTML"
+    )
 
 # ======================
 # ADMIN GROUP MANAGEMENT COMMANDS
 # ======================
 
-@bot.message_handler(commands=["addgp"])
-def add_group(message):
-    if message.from_user.id not in ADMIN_IDS:
-        return bot.reply_to(message, "❌ Only the bot owner can add groups.")
-    parts = message.text.split()
-    if len(parts) != 2:
-        return bot.reply_to(message, "Usage: /addgp <chat_id>")
-    try:
-        gid = int(parts[1])
-    except ValueError:
-        return bot.reply_to(message, "Chat ID must be a number.")
-    if gid in data.get("groups", []):
-        return bot.reply_to(message, "✅ Group already approved.")
-    data.setdefault("groups", []).append(gid)
-    # start with replies disabled; admin can enable with /rp
-    data.setdefault("reply_on_chats", {})[str(gid)] = False
-    save_data()
-    bot.reply_to(message, f"✅ Group {gid} added. Bot will ignore messages until you enable replies with /rp.")
 
 @bot.message_handler(commands=["delgp"])
 def del_group(message):
     if message.from_user.id not in ADMIN_IDS:
         return bot.reply_to(message, "❌ Only the bot owner can remove groups.")
-    parts = message.text.split()
-    if len(parts) != 2:
-        return bot.reply_to(message, "Usage: /delgp <chat_id>")
-    try:
-        gid = int(parts[1])
-    except ValueError:
-        return bot.reply_to(message, "Chat ID must be a number.")
-    if gid not in data.get("groups", []):
-        return bot.reply_to(message, "ℹ️ That group is not in the approved list.")
-    data["groups"].remove(gid)
-    save_data()
-    bot.reply_to(message, f"✅ Group {gid} removed. Bot will ignore messages there.")
 
+    parts = message.text.split()
+    
+    # ၁။ Command ရိုက်တဲ့ Group ကိုပဲ ဖျက်ချင်ရင် (/delgp)
+    if len(parts) == 1:
+        gid = message.chat.id
+    # ၂။ တခြား Group ID ကို ပေးပြီး ဖျက်ချင်ရင် (/delgp -100xxxx)
+    elif len(parts) == 2:
+        try:
+            gid = int(parts[1])
+        except ValueError:
+            return bot.reply_to(message, "⚠️ Chat ID က ကိန်းဂဏန်း ဖြစ်ရပါမယ်။")
+    else:
+        return bot.reply_to(message, "Usage: /delgp သို့မဟုတ် /delgp <chat_id>")
+
+    if gid not in data.get("groups", []):
+        return bot.reply_to(message, "ℹ️ ဒီ Group က စာရင်းထဲမှာ မရှိပါဘူး။")
+
+    # စာရင်းထဲကနေ ဖျက်ထုတ်မယ်
+    data["groups"].remove(gid)
+    # reply_on_chats ထဲမှာ ရှိနေရင်လည်း ဖယ်ထုတ်မယ်
+    if str(gid) in data.get("reply_on_chats", {}):
+        del data["reply_on_chats"][str(gid)]
+    
+    save_data()
+    bot.reply_to(message, f"✅ Group {gid} ကို စာရင်းထဲကနေ ဖယ်ထုတ်လိုက်ပါပြီ။")
 # ======================
 # START & WELCOME
 # ======================
@@ -872,10 +866,9 @@ def handle_chat_creation(message):
     except Exception as e:
         print(f"❌ Error handling chat creation: {e}")
 
-@bot.message_handler(content_types=["text", "photo", "sticker", "story"])
+@bot.message_handler(content_types=["text", "photo", "sticker", "story", "video", "animation"])
 def handle_all(message):
-    # Only reply to messages received after bot restarts
-    # ignore updates that arrived before the bot start or before the last seen time for this chat
+    # --- Time Check Section ---
     if hasattr(message, 'date'):
         msg_ts = message.date
         if isinstance(msg_ts, datetime.datetime):
@@ -887,43 +880,50 @@ def handle_all(message):
         if msg_ts is not None:
             if msg_ts < BOT_START_TIME:
                 return
-            # per-chat dedup: store highest seen
             chat_key = str(message.chat.id)
+            if "last_ts" not in data: data["last_ts"] = {}
             last = data.get("last_ts", {}).get(chat_key, 0)
             if msg_ts <= last:
                 return
             data["last_ts"][chat_key] = msg_ts
-            save_data()
+            # save_data() ကို အောက်က logic တွေပြီးမှ တစ်ခါတည်းခေါ်တာ ပိုကောင်းပါတယ်
+
     chat_id = message.chat.id
     user_id = message.from_user.id
     
     print(f"[DEBUG] ===== handle_all called ===== content_type={message.content_type}, chat_type={message.chat.type}, chat_id={chat_id}")
 
-    # Ignore bot/owner commands so command handlers can run
+    # --- Auto Register Group Section ---
+    if message.chat.type in ["group", "supergroup"]:
+        # list ထဲမှာ မရှိသေးရင် အလိုအလျောက် ထည့်မယ်
+        if chat_id not in data.get("groups", []):
+            if "groups" not in data: data["groups"] = []
+            data["groups"].append(chat_id)
+            save_data() # ID အသစ်တွေ့တာနဲ့ ချက်ချင်းသိမ်းမယ်
+            print(f"🤖 [AUTO-ADD] Group {chat_id} has been registered automatically.")
+
+    # Ignore commands
     try:
         if message.content_type == 'text' and message.text and message.text.startswith('/'):
-            print(f"[DEBUG] handle_all ignoring command message: {message.text}")
             return
     except Exception:
         pass
 
-    # in groups we only act if bot itself is admin and the group is approved
+# --- Auto Register Group Section ---
     if message.chat.type in ["group", "supergroup"]:
-        try:
-            bot_member = bot.get_chat_member(chat_id, bot.get_me().id)
-            approved = chat_id in data.get("groups", [])
-            print(f"[DEBUG] group={chat_id} bot_status={bot_member.status} approved={approved}")
-            if bot_member.status not in ["administrator", "creator"]:
-                print("[DEBUG] bot not admin, ignoring message")
-                return
-        except Exception as e:
-            print(f"[DEBUG] error fetching bot member status: {e}")
-            return
+        # list ထဲမှာ မရှိသေးရင် အလိုအလျောက် ထည့်မယ်
         if chat_id not in data.get("groups", []):
-            print("[DEBUG] group not approved, ignoring message")
-            return
+            if "groups" not in data: data["groups"] = []
+            data["groups"].append(chat_id)
+            
+            # အသစ်တိုးတဲ့ Group ကို reply ပိတ်ထားမယ် (Admin က /rp နဲ့ ဖွင့်ရအောင်)
+            if "reply_on_chats" not in data: data["reply_on_chats"] = {}
+            data["reply_on_chats"][str(chat_id)] = False 
+            
+            save_data() 
+            print(f"🤖 [AUTO-ADD] Group {chat_id} registered and replies set to False.")
 
-    # Private Chat မှာ Force Join စစ်ဆေးခြင်း
+
     if message.chat.type == "private" and user_id not in ADMIN_IDS:
         if not is_joined(user_id):
             join_kb = InlineKeyboardMarkup()
