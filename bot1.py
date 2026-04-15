@@ -258,7 +258,23 @@ def toggle_reply_callback(call):
 # ======================
 @bot.message_handler(commands=["setmute"])
 def set_mute_time(message):
-    if message.from_user.id not in ADMIN_IDS: return
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    
+    # ၁။ Private Chat မှာဆိုရင် Bot Admin ပဲ ရရမယ်
+    if message.chat.type == "private":
+        if user_id not in ADMIN_IDS: return
+    else:
+        # ၂။ Group မှာဆိုရင် Group Admin ဖြစ်ရမယ် (သို့မဟုတ်) Bot Owner ဖြစ်ရမယ်
+        try:
+            member = bot.get_chat_member(chat_id, user_id)
+            is_group_admin = member.status in ["administrator", "creator"]
+            if not is_group_admin and user_id not in ADMIN_IDS:
+                return bot.reply_to(message, "❌ ဒီ command ကို Group Admin များသာ သုံးနိုင်ပါတယ်။")
+        except Exception as e:
+            print(f"Error checking admin status: {e}")
+            return
+
     args = message.text.split()
     if len(args) < 2:
         return bot.reply_to(message, "Usage: /setmute 30s (or 5m, 1d)")
@@ -266,13 +282,19 @@ def set_mute_time(message):
     seconds = parse_time(args[1])
     if seconds is not None:
         if seconds < 30:
-            return bot.reply_to(message, "⚠️ Telegram စည်းကမ်းအရ Mute time ကို အနည်းဆုံး 30s ကနေပဲ စလို့ရပါတယ်ဗျ။")
-        data["mute_time"] = seconds
+            return bot.reply_to(message, "⚠️ Telegram စည်းကမ်းအရ Mute time ကို အနည်းဆုံး 30s ထားပေးရပါမယ်။")
+        
+        # ၃။ Group ID အလိုက် Mute Time ကို သိမ်းဆည်းမယ်
+        if "group_mute_times" not in data:
+            data["group_mute_times"] = {}
+        
+        data["group_mute_times"][str(chat_id)] = seconds
         save_data()
-        bot.reply_to(message, f"✅ Mute time set to {args[1]} ({seconds} seconds)")
+        
+        bot.reply_to(message, f"✅ ဒီ Group အတွက် Mute time ကို {args[1]} ({seconds} seconds) အဖြစ် သတ်မှတ်လိုက်ပါပြီ။")
     else:
-        bot.reply_to(message, "❌ Invalid format! Use: 30s, 5m, or 1d")
-
+        bot.reply_to(message, "❌ Invalid format! Use: 30s, 5m, or 1h")
+        
 @bot.message_handler(commands=["addword"])
 def add_word(message):
     # owner-only global word addition (only in private chat)
@@ -1043,9 +1065,12 @@ def handle_all(message):
             print(f"💥 Violation detected - Reason: {reason}, Strikes: {strikes}/3, User: {user_id}, Chat: {chat_id}")
             
             if strikes >= 3:
-                mute_time = data.get("mute_time", 30)
-                until_date = int(time.time()) + mute_time
-                print(f"🔇 Muting user {user_id} for {mute_time} seconds...")
+                # ၁၀၆၈ ဝန်းကျင်မှာ အောက်ကအတိုင်း ပြင်ပါ
+                group_mute_times = data.get("group_mute_times", {})
+                current_mute_duration = group_mute_times.get(str(chat_id), data.get("mute_time", 60))
+        
+                until_date = int(time.time()) + current_mute_duration
+                print(f"🔇 Muting user {user_id} for {current_mute_duration} seconds...")
                 try:
                     bot.restrict_chat_member(chat_id, user_id, permissions=ChatPermissions(), until_date=until_date)
                     print(f"✅ User {user_id} muted successfully until {until_date}")
