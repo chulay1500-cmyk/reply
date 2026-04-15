@@ -1127,7 +1127,7 @@ def handle_all(message):
             elif message.content_type == 'text':
                 current_reply = message.html_text 
                 if is_clean_text(current_reply):
-                    save_to_brain(parent, current_reply)
+                    save_to_brain(parent, current_reply, None)
                     print(f"✅ မှတ်သားပြီး (Text-to-Text): {parent[:30]}...")
                     return # သင်ယူပြီးရင် ဒီမှာတင် ရပ်လိုက်ပါ
 
