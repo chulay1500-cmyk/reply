@@ -225,11 +225,11 @@ def parse_time(text):
 def main_buttons():
     kb = InlineKeyboardMarkup(row_width=2)
     kb.add(
-        InlineKeyboardButton("👤 ပိုင်ရှင်", url="https://t.me/Julierbo2_151102"),
-        InlineKeyboardButton("🆘 ချန်နယ်", url="https://t.me/julierbo3_151102"),
+        InlineKeyboardButton("ဘဝ သမားလေး", url="https://t.me/HANTHAR999"),
+        InlineKeyboardButton(" စကားပြော ", url="https://t.me/myanmar_music_Bot2027"),
         InlineKeyboardButton(
             "➕ ထည့်သွင်းရန်",
-            url="https://t.me/GroupspamDeleteBot?startgroup=s&delete_message+manage_video_chats_message+invite_users"
+            url="https://t.me/MYANMAR_FRIEND_BOT?startgroup=s&delete_message+manage_video_chats_message+invite_users"
         )
     )
     return kb
@@ -699,8 +699,8 @@ def start(message):
         if not is_joined(user_id):
             join_kb = InlineKeyboardMarkup()
             clean_channel = FORCE_JOIN_CHANNEL.replace('@', '')
-            join_kb.add(InlineKeyboardButton("📢 Join Channel", url=f"https://t.me/{clean_channel}"))
-            join_kb.add(InlineKeyboardButton("🔄 Join ပြီးပါပြီ (စစ်ဆေးမည်)", url=f"https://t.me/{BOT_USERNAME}?start=check"))
+            join_kb.add(InlineKeyboardButton("Channal Join ပေးပါ", url=f"https://t.me/{clean_channel}"))
+            join_kb.add(InlineKeyboardButton("🔄  (စစ်ဆေးမည်)", url=f"https://t.me/MYANMAR_FRIEND_BOT?start=start"))
             
             return bot.send_message(
                 message.chat.id, 
@@ -711,10 +711,10 @@ def start(message):
     # ၃။ Join ထားပြီးသူများအတွက် ပြသမည့် စာသား
     bot.send_message(
         message.chat.id, 
-        "<tg-emoji emoji-id='5251299553239398548'>🤖</tg-emoji> <b>Group Help Bot Online!</b>\n\n"
+        "<tg-emoji emoji-id='5251299553239398548'>🤖</tg-emoji> <b>𝙼𝚢𝚊𝚗𝚖𝚊𝚛 𝙵𝚛𝚒𝚎𝚗𝚍 Bot Online!</b>\n\n"
         "<tg-emoji emoji-id='5240241223632954241'>🚫</tg-emoji> Bio / Join / Link spam auto delete\n"
         "<tg-emoji emoji-id='6271786398404055377'>⚠️</tg-emoji> 3 Warnings = Auto Mute\n\n"
-        "<tg-emoji emoji-id='5226945370684140473'>➕</tg-emoji> Bot ကို Group ထဲထည့်ပြီး Admin ပေးထားပါ။ <tg-emoji emoji-id='5226945370684140473'>➕</tg-emoji> ",
+        "<tg-emoji emoji-id='5226945370684140473'>➕</tg-emoji> Bot ကို Group ထဲထည့်ပြီး Admin ပေးထားပါ။ မူရင်းရေးသားသူအား crdပါဗျာ<tg-emoji emoji-id='5226945370684140473'>➕</tg-emoji> ",
         reply_markup=main_buttons()
     )
             
@@ -878,7 +878,7 @@ def welcome_group(message):
                     print(f"   Bot ID: {bot_id}, Is Bot: {user.id == bot_id}")
                     # Bot ကိုယ်တိုင် Group ထဲ ရောက်သွားတဲ့အခါ နှုတ်ဆက်ရန်
                     if user.id == bot_id:
-                        msg = "<tg-emoji emoji-id='5251299553239398548'>🤖</tg-emoji> <b>Guard Help Bot Active!</b>\n\n<tg-emoji emoji-id='5215613971352004352'>❤️</tg-emoji> ကျွန်မကို Admin ပေးထားဖို့ မမေ့ပါနဲ့ရှင့်။ <tg-emoji emoji-id='5215361191051798408'>❤️</tg-emoji>\n\nSpam linkတွေနဲ့ bioတွေကို အလိုအလျောက် ဖျက်ပေးပါမယ်။",
+                        msg = "<tg-emoji emoji-id='5251299553239398548'>🤖</tg-emoji> <b> 𝙼𝚢𝚊𝚗𝚖𝚊𝚛 𝙵𝚛𝚒𝚎𝚗𝚍 Bot Active!</b>\n\n<tg-emoji emoji-id='5215613971352004352'>❤️</tg-emoji> ကျွန်​ေတာ်ကို Admin ပေးထားဖို့ မမေ့ပါနဲ့ဗျာ။ <tg-emoji emoji-id='5215361191051798408'>🤍</tg-emoji>\n\nSpam linkတွေနဲ့ bioတွေကို အလိုအလျောက် ဖျက်ပေးပါမယ်။",
                         reply_markup=main_buttons()
                         bot.send_message(message.chat.id, msg, reply_markup=main_buttons())
                         print(f"✅ Bot welcome message sent to group {message.chat.id}")
@@ -971,8 +971,8 @@ def handle_all(message):
         if not is_joined(user_id):
             join_kb = InlineKeyboardMarkup()
             clean_channel = FORCE_JOIN_CHANNEL.replace('@', '')
-            join_kb.add(InlineKeyboardButton("📢 Join Channel", url=f"https://t.me/{clean_channel}"))
-            join_kb.add(InlineKeyboardButton("🔄 Join ပြီးပါပြီ (စစ်ဆေးမည်)", url=f"https://t.me/{BOT_USERNAME}?start=check"))
+            join_kb.add(InlineKeyboardButton(" Channel join", url=f"https://t.me/{clean_channel}"))
+            join_kb.add(InlineKeyboardButton(" Join (စစ်ဆေးမည်)", url=f"https://t.me/MYANMAR_FRIEND_BOT?start=start"))
             return bot.send_message(
                 message.chat.id,
                 "<tg-emoji emoji-id='6257780484281997093'>❌</tg-emoji> <b>အသုံးပြုခွင့်မရှိသေးပါ!</b>\n\nဒီ Bot ကို သုံးဖို့အတွက် Group ကို အရင် Join ပေးရပါမယ်။",
